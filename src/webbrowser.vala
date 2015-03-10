@@ -5,7 +5,7 @@ namespace CodeCat {
 
 	public class WebBrowser : Container {
 
-		private Gtk.ScrolledWindow swin;
+		// private Gtk.ScrolledWindow swin;
 
 		public string url { get; set; default = "http://www.google.com"; }
 

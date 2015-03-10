@@ -7,18 +7,44 @@ namespace CodeCat {
 	public class ApplicationWindow : Gtk.ApplicationWindow {
 
 		[GtkChild]
-		public Gtk.Stack stack;
+		public Stack stack;
 
 		[GtkChild]
-		public Gtk.TreeView projects_treeview;
+		public TreeView projects_treeview;
+
+		[GtkChild]
+		public TreeViewColumn project_name_column;
+
+		[GtkChild]
+		public CellRendererText project_name_cell_renderer;
+
+		[GtkChild]
+		public TreeView project_files;
+
+		[GtkChild]
+		public Revealer inspector;
+
+		[GtkChild]
+		public Label inspector_primary_label;
+
+		[GtkChild]
+		public Image inspector_primary_icon;
+
+		public WebView view;
 
 		private CodeCat app;
+
+		[GtkCallback]
+		public void on_inspector_close_button_clicked (Button button) {
+			inspector.set_reveal_child (false);
+		}
 
 		public ApplicationWindow (CodeCat application) {
 			GLib.Object (application:application);
 			this.app = application;
 
 			projects_treeview.set_model (app.projects);
+			project_files.set_model (app.filetree_filter);
 
 			var swin = new ScrolledWindow (null, null);
 			swin.hexpand = true;
@@ -27,7 +53,7 @@ namespace CodeCat {
 			// var web_view_settings = new WebKit.Settings ();
 			// web_view_settings.enable_developer_extras = true;
 
-			var view = new WebView ();
+			view = new WebView ();
 			view.show ();
 
 			view.get_inspector ().show ();
@@ -37,6 +63,14 @@ namespace CodeCat {
 			stack.add_titled (swin, "browser", "Browser");
 
 			view.open ("http://localhost:9999/");
+
+			project_name_column.set_cell_data_func (project_name_cell_renderer, (column, cell, model, iter) => {
+					Project project;
+					model.get(iter, 0, out project);
+					(cell as CellRendererText).markup = "<b>" + project.name + "</b>\n<i>" + project.path + "</i>";
+
+				});
+
 		}
 	}
 }

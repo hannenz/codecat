@@ -12,11 +12,25 @@ namespace CodeCat {
 
 		public TreeStore filetree;
 
+		public TreeModelFilter filetree_filter;
+
 		public CodeCat () {
 			application_id = "de.hannenz.codecat";
 		}
 
+		/* Activate is called when the application is launched without command line parameters */
 		public override void activate () {
+
+
+			var theme = Gtk.IconTheme.get_default ();
+			var list = theme.list_icons (null);
+
+			string[] paths;
+			theme.get_search_path(out paths);
+			foreach (string path in paths) {
+				debug (path);
+			}
+			return;
 
 			this.server = new WebServer ();
 			this.server.run_async ();
@@ -31,52 +45,153 @@ namespace CodeCat {
 			projects.append (out iter);
 			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
 
-			project.name = "Foo Bar";
-			project.path = "/home/hannenz/smbtom/htdocs/foo-bar";
+			project = new Project ();
+			project.name = "Timingplaner";
+			project.path = "/home/hannenz/smbtom/htdocs/timingplaner";
 			projects.append (out iter);
 			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
 
-			filetree = new TreeStore (2, 
-				typeof (string),	// full path
-				typeof (string)		// name
+			project = new Project ();
+			project.name = "Hilcona AG Website";
+			project.path = "/home/hannenz/smbtom/htdocs/hilcona";
+			projects.append (out iter);
+			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
+
+			filetree = new TreeStore (
+				5,
+				typeof (string),	// 0 path
+				typeof (string),	// 1 name
+				typeof (Object),	// 2 FileMonitor
+				typeof (Icon),		// 3 icon name
+				typeof (int)		// 4 FileType
 			);
 
-			load_directory ("/home/hannenz/codecat");
-			
+			filetree_filter = new TreeModelFilter(filetree, null);
+			filetree_filter.set_visible_func ( (model, iter) => {
+					string name;
+					model.get(iter, 1, out name);
+					return (name[0] != '.');
+				});
+
 			window = new ApplicationWindow(this);
+
+			window.projects_treeview.row_activated.connect ( (path, col) => {
+					TreeIter iter1;
+					Project new_project;
+					projects.get_iter (out iter1, path);
+					projects.get(iter1, 0, out new_project);
+
+					switch_to_project (new_project);
+				});
+
+			window.project_files.row_activated.connect ( (path, col) => {
+
+					window.inspector.set_reveal_child (false);
+
+					TreeIter iter2;
+					string name;
+					Icon icon;
+					FileType file_type;
+
+					filetree_filter.get_iter (out iter2, path);
+					filetree_filter.get(iter2, 1, out name, 3, out icon, 4, out file_type);
+					if (file_type == FileType.REGULAR) {
+						window.inspector_primary_icon.set_from_gicon (icon, IconSize.DIALOG);
+
+						window.inspector_primary_label.set_label (name);
+						window.inspector.set_reveal_child (true);
+					}
+				});
+
+			TreeIter iter_first_project;
+			Project first_project;
+			projects.get_iter (out iter_first_project, new TreePath.first ());
+			projects.get(iter_first_project, 0, out first_project);
+			switch_to_project (first_project);
+
 			window.present ();
 		}
 
+		/* Guaranteed to be called once for each primary application instance: */
+		public override void startup () {
+			base.startup ();
+		}
 
-		private void load_directory_children (obj, res) {
-					try {
-						FileEnumerator enumerator = file.enumerate_children_async.end (res);
-						FileInfo info;
-						while ((info = enumerator.next_file (null)) != null) {
-							stdout.printf ("%s\n", info.get_name ());
-							stdout.printf ("\t%s\n", info.get_file_type ().to_string ());
-							stdout.printf ("\t%s\n", info.get_is_symlink ().to_string ());
-							stdout.printf ("\t%s\n", info.get_is_hidden ().to_string ());
-							stdout.printf ("\t%s\n", info.get_is_backup ().to_string ());
-							stdout.printf ("\t%"+int64.FORMAT+"\n", info.get_size ());
-						}
+		public void switch_to_project (Project project) {
+			assert (project != null);
+
+			debug ("Switching to Project: %s at %s", project.name, project.path);
+
+			server.document_root = project.path;
+		
+			load_directory (project.path);
+
+			window.inspector.set_reveal_child (false);
+
+			window.view.reload ();
+		}
+
+		private void load_directory_children_sync (File file, TreeIter? parent_iter = null, Cancellable? cancellable = null) throws Error {
+			
+			FileEnumerator enumerator = file.enumerate_children ("standard::*", FileQueryInfoFlags.NOFOLLOW_SYMLINKS, cancellable);
+			FileInfo info = null;
+
+			while (cancellable.is_cancelled () == false && ((info = enumerator.next_file (cancellable)) != null)) {
+
+				string icon_name = "gtk-file";
+
+				FileMonitor monitor = null;
+
+				TreeIter iter;
+				filetree.append (out iter, parent_iter);
+
+				if (info.get_file_type () == FileType.DIRECTORY) {
+					File subdir = file.resolve_relative_path (info.get_name ());
+					load_directory_children_sync (subdir, iter, cancellable);
+					icon_name = "gtk-directory";
+				}
+				else {
+					// For testing: Only watch .scss files not starting with an underscore;
+
+					var filename = info.get_name ();
+					if (Regex.match_simple ("^[^_\\.].*\\.scss$", filename)) {
+
+						File subfile = file.resolve_relative_path (info.get_name ());
+						
+						monitor = subfile.monitor (FileMonitorFlags.NONE, null);
+
+						stdout.printf("** Monitoring %s\n", filename);
+
+						monitor.changed.connect (on_file_changed);
 					}
-					catch (Error e) {
-						stdout.printf ("Error: %s\n", e.message);
-					}
+				}
+
+				var icon = new ThemedIcon (icon_name);
+				var file_type = info.get_file_type ();
+
+				filetree.set(iter, 0, file.get_path (), 1, info.get_name (), 2, monitor, 3, icon, 4, (int)file_type);
+			}
 		}
 
 		public void load_directory (string path) {
 
 			filetree.clear ();
 
-			var file = File.new_for_path(path);
+			try {
+				var dir = File.new_for_path(path);
 
-			file.enumerate_children_async.begin ("standard::*", FileQueryInfoFlags.NOFOLLOW_SYMLINKS, Priority.DEFAULT, null, load_directory_children);
+				load_directory_children_sync (dir, null, new Cancellable ());
+			}
+			catch (Error e) {
+				stderr.printf("Error: %s\n", e.message);
+			}
 		}
 
-		public override void startup () {
-			base.startup ();
+		public void on_file_changed (File file, File? other_file, FileMonitorEvent event) {
+
+			if (event == FileMonitorEvent.CHANGES_DONE_HINT) {
+				stdout.printf ("Change detected to \"%s\" : %s\n", file.get_path(), event.to_string ());
+			}
 		}
 	}
 }
