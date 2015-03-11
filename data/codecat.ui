@@ -116,7 +116,7 @@
 											</packing>
 										</child>
 										<child>
-											<object class="GtkRevealer" id="inspector">
+											<object class="GtkRevealer" id="sidebar">
 												<property name="visible">True</property>
 												<property name="transition-type">slide-left</property>
 												<child>
@@ -141,12 +141,12 @@
 																		<property name="orientation">horizontal</property>
 																		<property name="spacing">10</property>
 																		<child>
-																			<object class="GtkImage" id="inspector_primary_icon">
+																			<object class="GtkImage" id="sidebar_primary_icon">
 																				<property name="visible">True</property>
 																			</object>
 																		</child>
 																		<child>
-																			<object class="GtkLabel" id="inspector_primary_label">
+																			<object class="GtkLabel" id="sidebar_primary_label">
 																				<property name="visible">True</property>
 																				<property name="label">I am the inspector</property>
 																			</object>

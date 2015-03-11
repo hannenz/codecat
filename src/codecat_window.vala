@@ -22,26 +22,33 @@ namespace CodeCat {
 		public TreeView project_files;
 
 		[GtkChild]
-		public Revealer inspector;
+		public Revealer sidebar;
 
 		[GtkChild]
-		public Label inspector_primary_label;
+		public Label sidebar_primary_label;
 
 		[GtkChild]
-		public Image inspector_primary_icon;
+		public Image sidebar_primary_icon;
 
 		public WebView view;
 
 		private CodeCat app;
 
+		private Window inspector_window;
+
 		[GtkCallback]
 		public void on_inspector_close_button_clicked (Button button) {
-			inspector.set_reveal_child (false);
+			sidebar.set_reveal_child (false);
 		}
 
 		public ApplicationWindow (CodeCat application) {
 			GLib.Object (application:application);
 			this.app = application;
+
+			var grey = Gdk.RGBA ();
+			grey.parse("#cccccc");
+
+			sidebar.override_background_color (Gtk.StateFlags.NORMAL, grey);
 
 			projects_treeview.set_model (app.projects);
 			project_files.set_model (app.filetree_filter);
@@ -50,13 +57,29 @@ namespace CodeCat {
 			swin.hexpand = true;
 			swin.vexpand = true;
 
-			// var web_view_settings = new WebKit.Settings ();
-			// web_view_settings.enable_developer_extras = true;
+			var web_view_settings = new WebKit.WebSettings ();
+			web_view_settings.enable_developer_extras = true;
 
 			view = new WebView ();
+			view.set_settings (web_view_settings);
 			view.show ();
 
-			view.get_inspector ().show ();
+			var inspector = view.get_inspector ();
+			inspector.inspect_web_view.connect ( (p0) => {
+
+					WebView iview = new WebView ();
+					unowned WebView b = iview;
+
+					this.inspector_window = new Gtk.Window ();
+					this.inspector_window.add  (iview);
+
+					return b;
+				});
+
+			inspector.show_window.connect ( () => {
+					this.inspector_window.present ();
+					return true;
+				});
 
 			swin.show_all ();
 			swin.add (view);
@@ -79,6 +102,7 @@ namespace CodeCat {
 			var settings = new WebKit.WebSettings ();
 			settings.enable_html5_database = true;
 			settings.enable_html5_local_storage = true;
+			settings.enable_offline_web_application_cache = true;
 
 			dd_view.set_settings(settings);
 

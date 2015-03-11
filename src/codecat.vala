@@ -76,7 +76,7 @@ namespace CodeCat {
 
 			window.project_files.row_activated.connect ( (path, col) => {
 
-					window.inspector.set_reveal_child (false);
+					window.sidebar.set_reveal_child (false);
 
 					TreeIter iter2;
 					string name;
@@ -86,10 +86,10 @@ namespace CodeCat {
 					filetree_filter.get_iter (out iter2, path);
 					filetree_filter.get(iter2, 1, out name, 3, out icon, 4, out file_type);
 					if (file_type == FileType.REGULAR) {
-						window.inspector_primary_icon.set_from_gicon (icon, IconSize.DIALOG);
+						window.sidebar_primary_icon.set_from_gicon (icon, IconSize.DIALOG);
 
-						window.inspector_primary_label.set_label (name);
-						window.inspector.set_reveal_child (true);
+						window.sidebar_primary_label.set_label (name);
+						window.sidebar.set_reveal_child (true);
 					}
 				});
 
@@ -116,7 +116,7 @@ namespace CodeCat {
 		
 			load_directory (project.path);
 
-			window.inspector.set_reveal_child (false);
+			window.sidebar.set_reveal_child (false);
 
 			window.view.reload ();
 		}

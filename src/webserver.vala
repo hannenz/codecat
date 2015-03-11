@@ -17,6 +17,9 @@ namespace CodeCat {
 			this.add_handler (null, default_handler);
 			// debug ("Running server async");
 //			server.run_async ();
+
+			var websocket = new WebSocket ("127.0.0.1", 9090);
+
 		}
 
 		public void default_handler (Server server, Soup.Message msg, string path, HashTable<string, string>? query, ClientContext client) {
