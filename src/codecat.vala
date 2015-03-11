@@ -21,17 +21,6 @@ namespace CodeCat {
 		/* Activate is called when the application is launched without command line parameters */
 		public override void activate () {
 
-
-			var theme = Gtk.IconTheme.get_default ();
-			var list = theme.list_icons (null);
-
-			string[] paths;
-			theme.get_search_path(out paths);
-			foreach (string path in paths) {
-				debug (path);
-			}
-			return;
-
 			this.server = new WebServer ();
 			this.server.run_async ();
 			
@@ -62,15 +51,16 @@ namespace CodeCat {
 				typeof (string),	// 0 path
 				typeof (string),	// 1 name
 				typeof (Object),	// 2 FileMonitor
-				typeof (Icon),		// 3 icon name
-				typeof (int)		// 4 FileType
+				typeof (Icon),		// 3 icon name (GIcon)
+				typeof (int)		// 4 FileType (GLib.FileType)
 			);
 
 			filetree_filter = new TreeModelFilter(filetree, null);
+
 			filetree_filter.set_visible_func ( (model, iter) => {
 					string name;
 					model.get(iter, 1, out name);
-					return (name[0] != '.');
+					return (name != null && name.length > 0 && name[0] != '.');
 				});
 
 			window = new ApplicationWindow(this);
@@ -143,7 +133,8 @@ namespace CodeCat {
 				FileMonitor monitor = null;
 
 				TreeIter iter;
-				filetree.append (out iter, parent_iter);
+				filetree.append  (out iter, parent_iter);
+				//filetree.insert  (out iter, parent_iter, -1);
 
 				if (info.get_file_type () == FileType.DIRECTORY) {
 					File subdir = file.resolve_relative_path (info.get_name ());
@@ -172,6 +163,8 @@ namespace CodeCat {
 				filetree.set(iter, 0, file.get_path (), 1, info.get_name (), 2, monitor, 3, icon, 4, (int)file_type);
 			}
 		}
+
+		// FIXME: Use async! see if it is faster..
 
 		public void load_directory (string path) {
 
