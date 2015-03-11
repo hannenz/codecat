@@ -18,7 +18,7 @@ namespace CodeCat {
 			// debug ("Running server async");
 //			server.run_async ();
 
-			var websocket = new WebSocket ("127.0.0.1", 9090);
+			var websocket = new WebSocket ();
 
 		}
 

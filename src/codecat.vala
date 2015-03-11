@@ -23,7 +23,8 @@ namespace CodeCat {
 
 			this.server = new WebServer ();
 			this.server.run_async ();
-			
+
+
 			projects = new ListStore (3, typeof (Object), typeof (string), typeof (string));
 
 			TreeIter iter;
