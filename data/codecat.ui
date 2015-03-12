@@ -19,6 +19,14 @@
 						<property name="stack">stack</property>
 					</object>
 				</child>
+
+				<child>
+					<object class="GtkButton">
+						<property name="visible">True</property>
+						<property name="label">Refresh Browser</property>
+						<signal name="clicked" handler="on_test_button_clicked" />
+					</object>
+				</child>
 			</object>
 		</child>
 		<child>

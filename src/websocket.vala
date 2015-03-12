@@ -14,11 +14,15 @@ namespace CodeCat {
 
 	public class WebSocket  {
 
+		public const uint16 PORT = 9090;
+
 		protected SocketService service;
 
 		private bool handshake = false;
 
 		private string sec_websocket_key = "";
+
+		private SocketConnection connection = null;
 
 		private async void worker_func (SocketConnection connection,  Source source, Cancellable cancellable) {
 			try {
@@ -65,8 +69,8 @@ namespace CodeCat {
 					ostream.put_string ("\r\n", cancellable);
 
 					handshake = true;
+					this.connection = connection;
 				}
-
 			}
 			catch (Error e) {
 				stderr.printf ("Error: %s\n", e.message);
@@ -77,7 +81,7 @@ namespace CodeCat {
 
 			try {
 				service = new SocketService ();
-				service.add_inet_port (9090, new Source (9090));
+				service.add_inet_port (PORT, new Source (PORT));
 				Cancellable cancellable = new Cancellable ();
 				cancellable.cancelled.connect ( () => {
 						service.stop ();
@@ -85,17 +89,24 @@ namespace CodeCat {
 
 				service.incoming.connect ( (connection, source_object) => {
 						Source source = source_object as Source;
-						stdout.printf ("Accepted! (Source: %d)\n", source.port);
+						debug ("Accepted! (Source: %d)\n", source.port);
 						worker_func.begin (connection, source, cancellable);
 						return false;
 					});
-
-				service.start ();
 			}
 			catch (Error e) {
 				stderr.printf ("Error: %s\n", e.message);
 			}
+		}
 
+		public void start () {
+			service.start ();
+		}
+
+		public void send (string message) {
+			assert (connection != null);
+			var ostream = new DataOutputStream (connection.output_stream);
+			ostream.put_string (message, null);
 		}
 
 		// protected Socket master;

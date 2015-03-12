@@ -6,6 +6,8 @@ namespace CodeCat {
 
 		public string document_root { get; set; default="/var/www"; }
 
+		public WebSocket websocket;
+
 		public WebServer  () {
 			Object (port : 9999);
 
@@ -18,7 +20,8 @@ namespace CodeCat {
 			// debug ("Running server async");
 //			server.run_async ();
 
-			var websocket = new WebSocket ();
+			websocket = new WebSocket ();
+			websocket.start ();
 
 		}
 
@@ -41,17 +44,38 @@ namespace CodeCat {
 				string etag_out;
 				string full_path = document_root + path;
 
+				// debug ("Serving resource: %s", full_path);
+
 				File resource = File.new_for_path (full_path);
 				resource.load_contents (null, out contents, out etag_out);
-				msg.set_status (200);
-				msg.set_response (mime_type, Soup.MemoryUse.COPY, contents);
 
-				// debug ("Serving resource: %s", full_path);
+				string pageload = (string)contents;
+
+				if (Regex.match_simple("text/html", mime_type) && Regex.match_simple ("\\.html$", path)) {
+					inject_websocket_connection (ref pageload);
+				}
+
+				msg.set_status (200);
+				msg.set_response (mime_type, Soup.MemoryUse.COPY, pageload.data);
 			}
 			catch (Error e) {
 				stderr.printf ("Failed to load resource: %s\n", path);
 				msg.set_status (404);
 			}
+		}
+
+		public void inject_websocket_connection (ref string html) {
+			debug ("HTML: %s\n", html);
+			string javascript = "<script>var ws = new WebSocket('localhost', 9090); ws.onmessage = function (e){ console.log (e.data); location.reload(); }; </script></head>";	
+
+				string[] parts = html.split("</head>", 2);
+
+			debug (parts[0]);
+
+			if (parts.length == 2) {
+				html = parts[0] + javascript + parts[1];
+			}
+			debug (html);
 		}
 	}
 }

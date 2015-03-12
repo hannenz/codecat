@@ -37,6 +37,11 @@ namespace CodeCat {
 		private Window inspector_window;
 
 		[GtkCallback]
+		public void on_test_button_clicked (Button button) {
+			app.server.websocket.send ("reload");
+		}
+
+		[GtkCallback]
 		public void on_inspector_close_button_clicked (Button button) {
 			sidebar.set_reveal_child (false);
 		}
