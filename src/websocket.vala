@@ -14,128 +14,167 @@ namespace CodeCat {
 
 	public class WebSocket  {
 
-		public const uint16 PORT = 9090;
+		public HashMap<string, Socket> sockets;
 
-		protected SocketService service;
+		public bool on_socket_in (Socket socket, IOCondition condition) {
 
-		private bool handshake = false;
-
-		private string sec_websocket_key = "";
-
-		private SocketConnection connection = null;
-
-		private async void worker_func (SocketConnection connection,  Source source, Cancellable cancellable) {
 			try {
-				DataInputStream istream = new DataInputStream (connection.input_stream);
-				DataOutputStream ostream = new DataOutputStream (connection.output_stream);
 
-				// Get the received message
-				InetSocketAddress remote_sock_addr = connection.get_remote_address () as InetSocketAddress;
-				InetAddress remote_addr = remote_sock_addr.get_address ();
+				// Accept non-connected socekts
+				if (!socket.is_connected ()) {
+					Socket conn = socket.accept ();
+					SocketSource src = conn.create_source (IOCondition.IN, null);
+					src.set_callback (on_socket_in);
+					src.attach (MainContext.default ());
+					return true;
+				}
 
-				stdout.printf ("## Receiving data from %s\n", remote_addr.to_string ());
-				string message = "";
-				do {
-					message = yield istream.read_line_async (Priority.DEFAULT, cancellable);
-					message._strip ();
-					stdout.printf ("Received: %s\n", message);
+				debug ("%d sockets", sockets.size);
 
-					if (message.has_prefix ("Sec-WebSocket-Key:")) {
-						string[] parts = message.split(" ");
+				// Read payload data
+				uint8 inbuffer[4096];
+
+				socket.receive (inbuffer, null);
+
+				debug ((string)inbuffer);
+
+				switch (inbuffer[0] & 0x0f) {
+					case 0x08:
+					// Handle close requests from clients
+						debug ("Received a CLOSE opcode");
+
+						// Search in sockets
+						var it = sockets.map_iterator ();
+						it.foreach ( (key, value) => {
+								if (value == socket) {
+									// Close socket and remove
+									debug ("Closing %s\n", key);
+									socket.close ();
+									sockets.unset (it.get_key());
+									return false;
+								}
+								return true;
+							});
+						break;
+					case 0x09:
+						debug ("Received a PING"); 
+						break;
+					case 0x0a:
+						debug ("Received a PONG"); 
+						break;
+				}
+
+				string message = (string)inbuffer;
+				string sec_websocket_key = null;
+				string[] lines = message.split("\r\n");
+
+				foreach (var line in lines) {
+					if (line.has_prefix ("Sec-WebSocket-Key:")) {
+						string[] parts = line.split(" ");
 						sec_websocket_key = parts[1];
-						debug (sec_websocket_key);
+						break;
 					}
+				}
 
-				} while (message.length > 0);
+				if (sec_websocket_key != null) {
 
-				// Response
-				if (!handshake && sec_websocket_key.length > 0) {
+					if (!sockets.has_key(sec_websocket_key)) {
+						debug ("Shaking hands with %s", sec_websocket_key);
+						string cat = sec_websocket_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+						var checksum = new Checksum (ChecksumType.SHA1);
+						checksum.update (cat.data, cat.length);
+						uint8 digest[20];
+						size_t digest_len = 20;
+						checksum.get_digest (digest, ref digest_len);
+						string key = Base64.encode(digest);
+						string header = 
+						"HTTP/1.1 101 Switching Protocols\r\n" +
+						"Upgrade: websocket\r\n" +
+						"Connection: Upgrade\r\n" +
+						"Sec-WebSocket-Accept: %s\r\n".printf (key) +
+						"\r\n";
 
-					string cat = sec_websocket_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-					var checksum = new Checksum (ChecksumType.SHA1);
-					checksum.update (cat.data, cat.length);
-					uint8[20] digest = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					size_t digest_len = 20;
-					checksum.get_digest (digest, ref digest_len);
-					debug ("%d".printf((int)digest_len));
-
-					string key = Base64.encode(digest);
-					debug (key);
-
-					ostream.put_string ("HTTP/1.1 101 Switching Protocols\r\n", cancellable);
-					ostream.put_string ("Upgrade: websocket\r\n", cancellable);
-					ostream.put_string ("Connection: Upgrade\r\n", cancellable);
-					ostream.put_string ("Sec-WebSocket-Accept: %s\r\n".printf (key), cancellable);
-					ostream.put_string ("\r\n", cancellable);
-
-					handshake = true;
-					this.connection = connection;
+						socket.send (header.data);
+						socket.set_data ("sec_websocket_key", sec_websocket_key);
+						debug ("Adding socket for %s", sec_websocket_key);
+						sockets.set(sec_websocket_key, socket);
+					}
 				}
 			}
 			catch (Error e) {
-				stderr.printf ("Error: %s\n", e.message);
-			}		
+				stderr.printf("Error: %s\n", e.message);
+			}
+			return true;
 		}
 
-		public WebSocket () {
-
+		public WebSocket (string address, uint16 port) {
 			try {
-				service = new SocketService ();
-				service.add_inet_port (PORT, new Source (PORT));
-				Cancellable cancellable = new Cancellable ();
-				cancellable.cancelled.connect ( () => {
-						service.stop ();
-					});
 
-				service.incoming.connect ( (connection, source_object) => {
-						Source source = source_object as Source;
-						debug ("Accepted! (Source: %d)\n", source.port);
-						worker_func.begin (connection, source, cancellable);
-						return false;
-					});
+				sockets = new HashMap<string, Socket> ();
+
+				var socket = new Socket (SocketFamily.IPV4, SocketType.STREAM, SocketProtocol.TCP);
+		 		socket.set_option (SOL_SOCKET, SO_REUSEADDR, 1);
+				socket.blocking = false;
+				assert (socket != null);
+
+				var addr = new InetAddress.from_string (address);
+				socket.bind (new InetSocketAddress(addr, port), true);
+				socket.set_listen_backlog (10);
+				socket.listen ();
+
+				SocketSource source = socket.create_source (IOCondition.OUT | IOCondition.IN, null);
+				source.set_callback (on_socket_in);
+				source.attach (MainContext.default ());
+
 			}
 			catch (Error e) {
-				stderr.printf ("Error: %s\n", e.message);
+				stderr.printf("Error: %s\n", e.message);
 			}
-		}
-
-		public void start () {
-			service.start ();
 		}
 
 		public void send (string message) {
-			assert (connection != null);
-			var ostream = new DataOutputStream (connection.output_stream);
-			ostream.put_string (message, null);
+
+			uint8 len = (uint8)message.length, frame[8192];
+			uint index = -1;
+
+
+			frame[0] = 129;
+			if (message.length <= 125) {
+				frame[1] = len;
+				index = 2;
+			}
+			else if (len >= 126 && len <= 65535) {
+				frame[1] = 126;
+				frame[2] = (len >> 8) & 255;
+				frame[3] = (len) & 255;
+				index = 4;
+			}
+			else {
+				frame[1] = 127;
+				frame[2] = (len >> 56) & 255;
+				frame[3] = (len >> 48) & 255;
+				frame[4] = (len >> 40) & 255;
+				frame[5] = (len >> 32) & 255;
+				frame[6] = (len >> 24) & 255;
+				frame[7] = (len >> 16) & 255;
+				frame[8] = (len >> 8) & 255;
+				frame[9] = (len) & 255;
+				index = 10;
+			}
+
+			for (int i = 0; i < len; i++) {
+				frame[index + i] = message.data[i];
+			}
+
+			foreach (Socket socket in sockets.values) {
+				try {
+					socket.send (frame);
+				}
+				catch (Error e) {
+					stderr.printf("Error: %s\n", e.message);
+				}
+			}
 		}
 
-		// protected Socket master;
-
-		// protected ArrayList<Socket> sockets;
-
-		// protected ArrayList<string> users;
-
-		// public WebSocket (string address, uint16 port) {
-
-		// 	try {
-		// 		master = new Socket (SocketFamily.IPV4, SocketType.STREAM, SocketProtocol.TCP);
-		// 		master.set_option (SOL_SOCKET, SO_REUSEADDR, 1);
-
-		// 		var addr = new InetAddress.from_string (address);
-
-		// 		master.bind (new InetSocketAddress(addr, port), true);
-		// 		master.listen();
-
-		// 		say ("Server started on " + new DateTime.now_local ().format ("%F %T"));
-		// 		say ("Listening on      " + address + ":" + port.to_string ());
-		// 	}
-		// 	catch (Error e) {
-		// 		stderr.printf ("Failed to create socket: %s\n", e.message);
-		// 	}
-		// }
-
-		// public void say (string mssg) {
-		// 	print ("%s\n".printf(mssg));
-		// }
 	}
 }
