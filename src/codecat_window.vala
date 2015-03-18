@@ -30,6 +30,9 @@ namespace CodeCat {
 		[GtkChild]
 		public Image sidebar_primary_icon;
 
+		[GtkChild]
+		public Gtk.Button refresh_browser_button;
+		
 		public WebView view;
 
 		private CodeCat app;
@@ -38,7 +41,7 @@ namespace CodeCat {
 
 		[GtkCallback]
 		public void on_test_button_clicked (Button button) {
-			app.server.websocket.send ("reload");
+			app.websocket_server.send ("reload");
 		}
 
 		[GtkCallback]

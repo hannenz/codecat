@@ -6,6 +6,8 @@ namespace CodeCat {
 
 		public WebServer server;
 
+		public WebSocketServer websocket_server;
+
 		public ApplicationWindow window;
 
 		public ListStore projects;
@@ -24,6 +26,17 @@ namespace CodeCat {
 			this.server = new WebServer ();
 			this.server.run_async ();
 
+			this.websocket_server = new WebSocketServer ("127.0.0.1", 9090);
+			websocket_server.client_connected.connect ((socket) => {
+					debug ("Client %s has connected to websocket server", socket.get_data <string> ("sec_websocket_key"));
+					int n = websocket_server.get_n_clients ();
+					window.refresh_browser_button.set_label ("Refresh %u browsers".printf (n));
+				});
+			websocket_server.client_disconnected.connect ((key) => {
+					debug ("Client %s has disconnected from websocket server", key);
+					int n = websocket_server.get_n_clients ();
+					window.refresh_browser_button.set_label ("Refresh %u browsers".printf (n));
+				});
 
 			projects = new ListStore (3, typeof (Object), typeof (string), typeof (string));
 
