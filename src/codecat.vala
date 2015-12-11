@@ -8,7 +8,7 @@ namespace CodeCat {
 
 		public ApplicationWindow window;
 
-		public ListStore projects;
+		public Gtk.ListStore projects;
 
 		public TreeStore filetree;
 
@@ -25,11 +25,17 @@ namespace CodeCat {
 			this.server.run_async ();
 
 
-			projects = new ListStore (3, typeof (Object), typeof (string), typeof (string));
+			projects = new Gtk.ListStore (3, typeof (Object), typeof (string), typeof (string));
 
 			TreeIter iter;
-			var project = new Project ();
 
+			var project = new Project ();
+			project.name = "Test";
+			project.path = "/home/hannenz/test";
+			projects.append(out iter);
+			projects.set(iter, 0, project, 1, project.name, 2, project.path);
+
+			project = new Project ();
 			project.name = "THERA Trainer Redesign";
 			project.path = "/home/hannenz/smbtom/htdocs/thera-trainer-redesign";
 			projects.append (out iter);

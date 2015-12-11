@@ -63,17 +63,17 @@ namespace CodeCat {
 		}
 
 		public void inject_websocket_connection (ref string html) {
-			debug ("HTML: %s\n", html);
+			// debug ("HTML: %s\n", html);
 			string javascript = "<script>var ws = new WebSocket('localhost', 9090); ws.onmessage = function (e){ console.log (e.data); location.reload(); }; </script></head>";	
 
 				string[] parts = html.split("</head>", 2);
 
-			debug (parts[0]);
+			// debug (parts[0]);
 
 			if (parts.length == 2) {
 				html = parts[0] + javascript + parts[1];
 			}
-			debug (html);
+			// debug (html);
 		}
 	}
 }

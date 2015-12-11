@@ -46,15 +46,22 @@ namespace CodeCat {
 						// Search in sockets
 						var it = sockets.map_iterator ();
 						it.foreach ( (key, value) => {
-								if (value == socket) {
-									// Close socket and remove
-									debug ("Closing %s\n", key);
+
+							if (value == socket) {
+								// Close socket and remove
+								debug ("Closing %s\n", key);
+								try {
 									socket.close ();
-									sockets.unset (it.get_key());
-									return false;
 								}
-								return true;
-							});
+								catch (Error e) {
+									stderr.printf("Error: %s", e.message);
+								}
+								sockets.unset (key);
+								return false;
+							}
+							return true;
+						});
+						
 						break;
 					case 0x09:
 						debug ("Received a PING"); 
