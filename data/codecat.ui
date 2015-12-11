@@ -21,7 +21,7 @@
 				</child>
 
 				<child>
-					<object class="GtkButton">
+					<object class="GtkButton" id="refresh_browser_button">
 						<property name="visible">True</property>
 						<property name="label">Refresh Browser</property>
 						<signal name="clicked" handler="on_test_button_clicked" />

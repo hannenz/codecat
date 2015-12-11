@@ -6,7 +6,6 @@ namespace CodeCat {
 
 		public string document_root { get; set; default="/var/www"; }
 
-		public WebSocket websocket;
 
 		public WebServer  () {
 			Object (port : 9999);
@@ -20,7 +19,6 @@ namespace CodeCat {
 			// debug ("Running server async");
 //			server.run_async ();
 
-			websocket = new WebSocket ("127.0.0.1", 9090);
 		}
 
 		public void default_handler (Server server, Soup.Message msg, string path, HashTable<string, string>? query, ClientContext client) {
