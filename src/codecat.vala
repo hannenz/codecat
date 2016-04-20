@@ -44,7 +44,7 @@ namespace CodeCat {
 
 			var project = new Project ();
 			project.name = "Test";
-			project.path = "/home/hannenz/test";
+			project.path = "/home/hannenz/sampleweb";
 			projects.append(out iter);
 			projects.set(iter, 0, project, 1, project.name, 2, project.path);
 

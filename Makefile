@@ -2,10 +2,10 @@ PRG = codecat
 CC = gcc
 VALAC = valac
 PKGCONFIG = $(shell which pkg-config)
-PACKAGES = gtk+-3.0 libsoup-2.4 webkitgtk-3.0 sqlite3 gee-0.8 linux
+PACKAGES = gtk+-3.0 libsoup-2.4 webkitgtk-3.0 sqlite3 gee-0.8 linux sass
 CFLAGS = `$(PKGCONFIG) --cflags $(PACKAGES)`
 LIBS = `$(PKGCONFIG) --libs $(PACKAGES)`
-VALAFLAGS = --vapidir=src/vapi $(patsubst %, --pkg %, $(PACKAGES)) --target-glib=2.38 --gresources data/codecat.gresource.xml
+VALAFLAGS = -X -lsass --vapidir=src/vapi $(patsubst %, --pkg %, $(PACKAGES)) --target-glib=2.38 --gresources data/codecat.gresource.xml 
 
 SOURCES =	src/main.vala\
 			src/codecat.vala\
