@@ -126,7 +126,7 @@ namespace Sass {
 
 	[CCode (cname = "struct Sass_Context", free_function = "")]
 	[Compact]
-	public class Context {
+	public class Context : Options {
 
 		[CCode (cname = "sass_context_get_options")]
 		public Options get_options();
@@ -163,11 +163,27 @@ namespace Sass {
 
 		[CCode (cname = "sass_context_get_included_files")]
 		public string[] get_included_files();
+
+
+		[CCode (cname = "sass_context_take_error_json")]
+		public string take_error_json();
+		[CCode (cname = "sass_context_take_error_text")]
+		public string take_error_text();
+		[CCode (cname = "sass_context_take_error_message")]
+		public string take_error_message();
+		[CCode (cname = "sass_context_take_error_file")]
+		public string take_error_file();
+		[CCode (cname = "sass_context_take_output_string")]
+		public string take_output_string();
+		[CCode (cname = "sass_context_take_source_map_string")]
+		public string take_source_map_string();
+		[CCode (cname = "sass_context_take_included_files")]
+		public string take_included_files();
 	}
 
-	[CCode (cname = "struct Sass_File_Context", free_function = "sass_delete_file_context")]
+	[CCode (cname = "struct Sass_File_Context", free_function = "")]
 	[Compact]
-	public class FileContext {
+	public class FileContext : Context {
 		[CCode (cname = "sass_make_file_context")]
 		public FileContext(string input_path);
 
@@ -184,9 +200,9 @@ namespace Sass {
 		public Context get_context();
 	}
 
-	[CCode (cname = "struct Sass_Data_Context", free_function = "sass_delete_data_context")]
+	[CCode (cname = "struct Sass_Data_Context", free_function = "")]
 	[Compact]
-	public class DataContext {
+	public class DataContext : Context {
 		[CCode (cname = "sass_make_data_context")]
 		public DataContext(string source_string);
 
@@ -203,7 +219,7 @@ namespace Sass {
 		public Context get_context();
 	}
 
-	[CCode (cname = "struct Sass_Compiler", free_function = "sass_delete_compiler")]
+	[CCode (cname = "struct Sass_Compiler", free_function = "")]
 	[Compact]
 	public class Compiler {
 		[CCode (cname = "sass_make_file_compiler")]

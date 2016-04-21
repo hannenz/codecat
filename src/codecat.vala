@@ -43,26 +43,14 @@ namespace CodeCat {
 			TreeIter iter;
 
 			var project = new Project ();
-			project.name = "Test";
-			project.path = "/home/hannenz/sampleweb";
+			project.name = "Württembergische Landesbünne";
+			project.path = "/var/www/html/wlb_static/";
 			projects.append(out iter);
 			projects.set(iter, 0, project, 1, project.name, 2, project.path);
 
 			project = new Project ();
-			project.name = "THERA Trainer Redesign";
-			project.path = "/home/hannenz/smbtom/htdocs/thera-trainer-redesign";
-			projects.append (out iter);
-			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
-
-			project = new Project ();
-			project.name = "Timingplaner";
-			project.path = "/home/hannenz/smbtom/htdocs/timingplaner";
-			projects.append (out iter);
-			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
-
-			project = new Project ();
 			project.name = "Hilcona AG Website";
-			project.path = "/home/hannenz/smbtom/htdocs/hilcona";
+			project.path = "/var/www/html/hilcona";
 			projects.append (out iter);
 			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
 
@@ -203,8 +191,39 @@ namespace CodeCat {
 		public void on_file_changed (File file, File? other_file, FileMonitorEvent event) {
 
 			if (event == FileMonitorEvent.CHANGES_DONE_HINT) {
+
 				stdout.printf ("Change detected to \"%s\" : %s\n", file.get_path(), event.to_string ());
+
+				compile_sass_file(file);
 			}
+		}
+
+		public bool compile_sass_file(File file) {
+
+			var ctx = new Sass.FileContext(file.get_path());
+			var opt = ctx.get_options();
+			opt.set_precision(1);
+			opt.set_output_style(Sass.OutputStyle.COMPRESSED);
+			opt.set_source_comments(false);
+			ctx.set_options(opt);
+
+			var compiler = new Sass.Compiler.from_file_context(ctx);
+			compiler.parse();
+			compiler.execute();
+
+			var output = ctx.get_output_string();
+
+			var error_status = ctx.get_error_status();
+
+			if (error_status == 0) {
+				stdout.printf("%s\n", output);
+			}
+			else {
+				stderr.printf("Failed to parse file: %u: %s\n", error_status, ctx.get_error_message());
+				return false;
+			}
+
+			return true;
 		}
 	}
 }

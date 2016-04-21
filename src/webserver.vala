@@ -12,7 +12,7 @@ namespace CodeCat {
 
 			assert (this != null);
 
-			document_root = "/var/www";
+			document_root = "/var/www/html";
 
 //			var server = new Soup.Server (Soup.SERVER_PORT, 9999);
 			this.add_handler (null, default_handler);
@@ -55,7 +55,7 @@ namespace CodeCat {
 				msg.set_response (mime_type, Soup.MemoryUse.COPY, pageload.data);
 			}
 			catch (Error e) {
-				stderr.printf ("Failed to load resource: %s\n", path);
+				stderr.printf ("Failed to load resource: %s\n", document_root + path);
 				msg.set_status (404);
 			}
 		}
