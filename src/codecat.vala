@@ -45,12 +45,14 @@ namespace CodeCat {
 			var project = new Project ();
 			project.name = "Württembergische Landesbünne";
 			project.path = "/var/www/html/wlb_static/";
+			project.custom_web_server = "";
 			projects.append(out iter);
 			projects.set(iter, 0, project, 1, project.name, 2, project.path);
 
 			project = new Project ();
-			project.name = "Hilcona AG Website";
-			project.path = "/var/www/html/hilcona";
+			project.name = "Wolfgang Braun";
+			project.path = "/var/www/html/wolfgang-braun";
+			project.custom_web_server = "http://wolfgang-braun.localhost/";
 			projects.append (out iter);
 			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
 
@@ -121,6 +123,13 @@ namespace CodeCat {
 			debug ("Switching to Project: %s at %s", project.name, project.path);
 
 			server.document_root = project.path;
+
+			server.custom_web_server = project.custom_web_server;
+
+			if (project.custom_web_server.length > 0) {
+				server.document_root = project.custom_web_server;
+			}
+
 		
 			load_directory (project.path);
 

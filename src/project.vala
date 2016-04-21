@@ -6,6 +6,8 @@ namespace CodeCat {
 
 		public string path { get; set; default=""; }
 
+		public string custom_web_server { get; set; default=""; }
+
 		public Project () {
 
 		}
