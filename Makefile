@@ -1,3 +1,13 @@
+#
+# Install dependencies on Debian/Ubuntu:
+#
+# sudo apt install automake libtool valac libgtk-3-dev libsoup2.4-dev libwebkitgtk-3.0-dev libsqlite3-dev libgee-0.8-dev
+# git clone ssh://git@github.com/sass/libsass
+# cd libsass
+# autoreconf --force --install
+# ./configure --disable-tests --disable-static --enable-shared --prefix=/usr
+# sudo make -j5 install
+#
 PRG = codecat
 CC = gcc
 VALAC = valac
