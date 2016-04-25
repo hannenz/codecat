@@ -41,7 +41,7 @@ namespace CodeCat {
 
 		[GtkCallback]
 		public void on_test_button_clicked (Button button) {
-			app.websocket_server.send ("reload");
+			app.websocket_server.send("reload");
 		}
 
 		[GtkCallback]

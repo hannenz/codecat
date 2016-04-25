@@ -225,7 +225,20 @@ namespace CodeCat {
 			var error_status = ctx.get_error_status();
 
 			if (error_status == 0) {
-				stdout.printf("%s\n", output);
+//				stdout.printf("%s\n", output);
+
+				try {
+					File outfile;
+					outfile = File.new_for_path("/var/www/html/wolfgang-braun/css/main.css");
+					var os = outfile.replace(null, false, FileCreateFlags.NONE);
+					var dos = new DataOutputStream(os);
+					dos.put_string(output);
+
+					this.websocket_server.send("refresh");
+				}
+				catch (Error e) {
+					stderr.printf("Failed to write output file\n");
+				}
 			}
 			else {
 				stderr.printf("Failed to parse file: %u: %s\n", error_status, ctx.get_error_message());

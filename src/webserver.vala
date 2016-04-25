@@ -8,6 +8,8 @@ namespace CodeCat {
 
 		public string custom_web_server {get; set; default = ""; }
 
+		protected uint8[] javascript;
+
 		public WebServer  () {
 			Object (port : 9999);
 
@@ -20,11 +22,22 @@ namespace CodeCat {
 			// debug ("Running server async");
 //			server.run_async ();
 
+
+			try {
+				string etag_out;
+				File jsfile;
+
+				jsfile = File.new_for_path("src/websocket_injection.js");
+				jsfile.load_contents(null, out javascript, out etag_out);
+			}
+			catch (Error e) {
+				stderr.printf("Failed to load javascript file for websocket injection\n");
+			}
 		}
 
 		public void default_handler (Server server, Soup.Message msg, string path, HashTable<string, string>? query, ClientContext client) {
 
-			debug ("Request for: " + path);
+			// debug ("Request for: " + path);
 
 			string mime_type = "text/html";
 			var request_headers = msg.request_headers;
@@ -47,7 +60,7 @@ namespace CodeCat {
 				}
 				else {
 					resource = File.new_for_uri (custom_web_server + path);
-					debug ("Loading content from: " + custom_web_server + path);
+					// debug ("Loading content from: " + custom_web_server + path);
 				}
 
 				resource.load_contents (null, out contents, out etag_out);
@@ -56,11 +69,11 @@ namespace CodeCat {
 				FileInfo info;
 				info = resource.query_info("*", 0);
 				var mime = ContentType.get_mime_type(info.get_content_type());
-				debug ("Response MIME Type: " + mime);
+				// debug ("Response MIME Type: " + mime);
 
 				string pageload = (string)contents;
 
-				if (Regex.match_simple("text/html", mime) && Regex.match_simple ("\\.html$", path)) {
+				if (Regex.match_simple("text/html", mime)/* && Regex.match_simple ("\\.html$", path)*/) {
 					inject_websocket_connection (ref pageload);
 				}
 
@@ -74,17 +87,12 @@ namespace CodeCat {
 		}
 
 		public void inject_websocket_connection (ref string html) {
-			// debug ("HTML: %s\n", html);
-			string javascript = "<script>var ws = new WebSocket('localhost', 9090); ws.onmessage = function (e){ console.log (e.data); location.reload(); }; </script></head>";	
 
-				string[] parts = html.split("</head>", 2);
-
-			// debug (parts[0]);
+			string[] parts = html.split("</head>", 2);
 
 			if (parts.length == 2) {
-				html = parts[0] + javascript + parts[1];
+				html = parts[0] + "<script>" + (string)this.javascript + "</script></head>" + parts[1];
 			}
-			// debug (html);
 		}
 	}
 }

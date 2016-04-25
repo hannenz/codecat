@@ -44,41 +44,6 @@ namespace CodeCat {
 			}
 		}
 
-				// debug ((string)inbuffer);
-
-				// switch (inbuffer[0] & 0x0f) {
-				// 	case 0x08:
-				// 	// Handle close requests from clients
-				// 		debug ("Received a CLOSE opcode");
-
-				// 		// Search in sockets
-				// 		var it = sockets.map_iterator ();
-				// 		it.foreach ( (key, value) => {
-
-				// 			if (value == socket) {
-				// 				// Close socket and remove
-				// 				debug ("Closing %s\n", key);
-				// 				try {
-				// 					socket.close ();
-				// 				}
-				// 				catch (Error e) {
-				// 					stderr.printf("Error: %s", e.message);
-				// 				}
-				// 				sockets.unset (key);
-				// 				return false;
-				// 			}
-				// 			return true;
-				// 		});
-						
-				// 		break;
-				// 	case 0x09:
-				// 		debug ("Received a PING"); 
-				// 		break;
-				// 	case 0x0a:
-				// 		debug ("Received a PONG"); 
-				// 		break;
-				// }
-				
 		/**
 		 * Perform WebSocket Protocol Handshake 
 		 */
@@ -160,7 +125,7 @@ namespace CodeCat {
 					return false;
 				}
 
-				// Accept non-connected socekts
+				// Accept non-connected sockets
 				if (!socket.is_connected ()) {
 					Socket conn = socket.accept ();
 					SocketSource src = conn.create_source (IOCondition.IN, null);
@@ -180,14 +145,16 @@ namespace CodeCat {
 					handshake (socket, inbuffer);
 				}
 				else {
+
 					// Is connected, so look at opcode
 
-					debug ("%d sockets", sockets.size);
+					// debug ("%d sockets", sockets.size);
 
 					switch (inbuffer[0] & 0x0f) {
 						case 0x08:
 							// Handle close requests from clients
 							string key = socket.get_data<string>("sec_websocket_key");
+							debug ("Closing: " + key);
 							close (sockets[key]);
 							break;
 
@@ -204,17 +171,20 @@ namespace CodeCat {
 			}
 			catch (Error e) {
 				stderr.printf("133 Error: %s\n", e.message);
+				return false;
 			}
 			return true;
 		}
 
+		/**
+		 * send a websocket frame width message as payload
+		 */
 		public void send (string message) {
 
 			uint8 len = (uint8)message.length, frame[8192];
 			uint index = -1;
 
-
-			frame[0] = 129;
+			frame[0] = 0x81; //Opcode 0x01 for "Text" | 0x80 for FIN.
 			if (message.length <= 125) {
 				frame[1] = len;
 				index = 2;
@@ -238,9 +208,12 @@ namespace CodeCat {
 				index = 10;
 			}
 
+			frame[1] &= 0x7f; // Never mask a server -> client frame
+
 			for (int i = 0; i < len; i++) {
 				frame[index + i] = message.data[i];
 			}
+			frame[index + len] = '\0';
 
 			foreach (Socket socket in sockets.values) {
 				try {
@@ -254,8 +227,6 @@ namespace CodeCat {
 
 		public int get_n_clients () {
 			return sockets.size;
-
 		}
-
 	}
 }
