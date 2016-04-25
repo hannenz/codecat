@@ -52,6 +52,22 @@
 												<property name="headers-clickable">True</property>
 												<property name="rules-hint">True</property>
 												<child>
+													<object class="GtkTreeViewColumn" id="project_running_column">
+														<property name="title">Running</property>
+														<property name="clickable">True</property>
+														<property name="sort-column-id">2</property>
+														<child>
+															<object class="GtkCellRendererToggle" id="project_running_cell_renderer">
+																<property name="activatable">True</property>
+																<signal name="toggled" handler="on_project_running_toggled" />
+															</object>
+															<attributes>
+																<attribute name="active">3</attribute>
+															</attributes>
+														</child>
+													</object>
+												</child>
+												<child>
 													<object class="GtkTreeViewColumn" id="project_name_column">
 														<property name="title">Project</property>
 														<property name="clickable">True</property>

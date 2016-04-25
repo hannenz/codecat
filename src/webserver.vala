@@ -10,18 +10,14 @@ namespace CodeCat {
 
 		protected uint8[] javascript;
 
-		public WebServer  () {
-			Object (port : 9999);
+		public WebServer  (int http_port) {
+			Object (port : http_port);
 
 			assert (this != null);
 
 			document_root = "/var/www/html";
 
-//			var server = new Soup.Server (Soup.SERVER_PORT, 9999);
 			this.add_handler (null, default_handler);
-			// debug ("Running server async");
-//			server.run_async ();
-
 
 			try {
 				string etag_out;
@@ -36,8 +32,6 @@ namespace CodeCat {
 		}
 
 		public void default_handler (Server server, Soup.Message msg, string path, HashTable<string, string>? query, ClientContext client) {
-
-			// debug ("Request for: " + path);
 
 			string mime_type = "text/html";
 			var request_headers = msg.request_headers;

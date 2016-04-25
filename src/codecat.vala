@@ -4,8 +4,6 @@ namespace CodeCat {
 
 	public class CodeCat : Gtk.Application {
 
-		public WebServer server;
-
 		public WebSocketServer websocket_server;
 
 		public ApplicationWindow window;
@@ -23,9 +21,6 @@ namespace CodeCat {
 		/* Activate is called when the application is launched without command line parameters */
 		public override void activate () {
 
-			this.server = new WebServer ();
-			this.server.run_async ();
-
 			this.websocket_server = new WebSocketServer ("127.0.0.1", 9090);
 			websocket_server.client_connected.connect ((socket) => {
 					debug ("Client %s has connected to websocket server", socket.get_data <string> ("sec_websocket_key"));
@@ -38,23 +33,27 @@ namespace CodeCat {
 					window.refresh_browser_button.set_label ("Refresh %u browsers".printf (n));
 				});
 
-			projects = new Gtk.ListStore (3, typeof (Object), typeof (string), typeof (string));
+			projects = new Gtk.ListStore (4, typeof (Object), typeof (string), typeof (string), typeof(bool));
 
 			TreeIter iter;
 
-			var project = new Project ();
+			var project = new Project (8001);
 			project.name = "Württembergische Landesbünne";
 			project.path = "/var/www/html/wlb_static/";
 			project.custom_web_server = "";
+			// project.http_port = 8001;
+			project.start();
 			projects.append(out iter);
-			projects.set(iter, 0, project, 1, project.name, 2, project.path);
+			projects.set(iter, 0, project, 1, project.name, 2, project.path, 3, project.running);
 
-			project = new Project ();
+			project = new Project (8002);
 			project.name = "Wolfgang Braun";
 			project.path = "/var/www/html/wolfgang-braun";
 			project.custom_web_server = "http://wolfgang-braun.localhost/";
+			// project.http_port = 8002;
+			project.start();
 			projects.append (out iter);
-			projects.set (iter, 0, project, 1,  project.name, 2, project.path);
+			projects.set (iter, 0, project, 1,  project.name, 2, project.path, 3, project.running);
 
 			filetree = new TreeStore (
 				5,
@@ -122,20 +121,12 @@ namespace CodeCat {
 
 			debug ("Switching to Project: %s at %s", project.name, project.path);
 
-			server.document_root = project.path;
 
-			server.custom_web_server = project.custom_web_server;
-
-			if (project.custom_web_server.length > 0) {
-				server.document_root = project.custom_web_server;
-			}
-
-		
 			load_directory (project.path);
 
 			window.sidebar.set_reveal_child (false);
 
-			window.view.reload ();
+			window.view.open("http://localhost:%u".printf( project.http_port));
 		}
 
 		private void load_directory_children_sync (File file, TreeIter? parent_iter = null, Cancellable? cancellable = null) throws Error {

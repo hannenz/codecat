@@ -49,6 +49,16 @@ namespace CodeCat {
 			sidebar.set_reveal_child (false);
 		}
 
+		[GtkCallback]
+		public void on_project_running_toggled (CellRendererToggle toggle, string path) {
+
+			Gtk.TreePath tree_path = new Gtk.TreePath.from_string (path);
+			Gtk.TreeIter iter;
+			app.projects.get_iter (out iter, tree_path);
+			app.projects.set (iter, 3, !toggle.active);
+		}
+
+
 		public ApplicationWindow (CodeCat application) {
 			GLib.Object (application:application);
 			this.app = application;
@@ -93,7 +103,7 @@ namespace CodeCat {
 			swin.add (view);
 			stack.add_titled (swin, "browser", "Browser");
 
-			view.open ("http://localhost:9999/");
+			//view.open ("http://localhost:8000");
 
 			project_name_column.set_cell_data_func (project_name_cell_renderer, (column, cell, model, iter) => {
 					Project project;
