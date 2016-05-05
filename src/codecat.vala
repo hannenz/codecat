@@ -2,7 +2,15 @@ using Gtk;
 
 namespace CodeCat {
 
+	public enum ProjectColumn {
+		PROJECT,
+		NAME,
+		PATH,
+		RUNNING
+	}
+
 	public class CodeCat : Gtk.Application {
+
 
 		public WebSocketServer websocket_server;
 
@@ -33,27 +41,6 @@ namespace CodeCat {
 					window.refresh_browser_button.set_label ("Refresh %u browsers".printf (n));
 				});
 
-			projects = new Gtk.ListStore (4, typeof (Object), typeof (string), typeof (string), typeof(bool));
-
-			TreeIter iter;
-
-			var project = new Project (8001);
-			project.name = "Württembergische Landesbünne";
-			project.path = "/var/www/html/wlb_static/";
-			project.custom_web_server = "";
-			// project.http_port = 8001;
-			project.start();
-			projects.append(out iter);
-			projects.set(iter, 0, project, 1, project.name, 2, project.path, 3, project.running);
-
-			project = new Project (8002);
-			project.name = "Wolfgang Braun";
-			project.path = "/var/www/html/wolfgang-braun";
-			project.custom_web_server = "http://wolfgang-braun.localhost/";
-			// project.http_port = 8002;
-			project.start();
-			projects.append (out iter);
-			projects.set (iter, 0, project, 1,  project.name, 2, project.path, 3, project.running);
 
 			filetree = new TreeStore (
 				5,
@@ -64,6 +51,7 @@ namespace CodeCat {
 				typeof (int)		// 4 FileType (GLib.FileType)
 			);
 
+
 			filetree_filter = new TreeModelFilter(filetree, null);
 
 			filetree_filter.set_visible_func ( (model, iter) => {
@@ -71,6 +59,55 @@ namespace CodeCat {
 					model.get(iter, 1, out name);
 					return (name != null && name.length > 0 && name[0] != '.');
 				});
+
+
+			projects = new Gtk.ListStore (4, typeof (Object), typeof (string), typeof (string), typeof(bool));
+
+			TreeIter iter;
+
+			var project = new Project (this, 8001);
+			project.name = "Württembergische Landesbünne";
+			project.path = "/var/www/html/wlb_static/";
+			project.custom_web_server = "";
+			// project.http_port = 8001;
+			project.start();
+			projects.append(out iter);
+			projects.set(iter,
+				ProjectColumn.PROJECT, project,
+				ProjectColumn.NAME, project.name,
+				ProjectColumn.PATH, project.path,
+				ProjectColumn.RUNNING,
+				project.running
+			);
+
+			project = new Project (this, 8002);
+			project.name = "Wolfgang Braun";
+			project.path = "/var/www/html/wolfgang-braun";
+			project.custom_web_server = "http://wolfgang-braun.localhost/";
+			// project.http_port = 8002;
+			project.start();
+			projects.append (out iter);
+			projects.set(iter,
+				ProjectColumn.PROJECT, project,
+				ProjectColumn.NAME, project.name,
+				ProjectColumn.PATH, project.path,
+				ProjectColumn.RUNNING,
+				project.running
+			);
+
+			project = new Project (this, 8003);
+			project.name = "Versichern Online";
+			project.path = "/mnt/wind-www/html/versichern.online/";
+			project.custom_web_server = "http://versichern.online.homelinux.lan/";
+			project.start();
+			projects.append (out iter);
+			projects.set(iter,
+				ProjectColumn.PROJECT, project,
+				ProjectColumn.NAME, project.name,
+				ProjectColumn.PATH, project.path,
+				ProjectColumn.RUNNING,
+				project.running
+			);
 
 			window = new ApplicationWindow(this);
 
@@ -83,6 +120,7 @@ namespace CodeCat {
 					switch_to_project (new_project);
 				});
 
+/*
 			window.project_files.row_activated.connect ( (path, col) => {
 
 					window.sidebar.set_reveal_child (false);
@@ -101,7 +139,7 @@ namespace CodeCat {
 						window.sidebar.set_reveal_child (true);
 					}
 				});
-
+*/
 			TreeIter iter_first_project;
 			Project first_project;
 			projects.get_iter (out iter_first_project, new TreePath.first ());
@@ -121,122 +159,10 @@ namespace CodeCat {
 
 			debug ("Switching to Project: %s at %s", project.name, project.path);
 
-
-			load_directory (project.path);
-
 			window.sidebar.set_reveal_child (false);
 
 			window.view.open("http://localhost:%u".printf( project.http_port));
 		}
 
-		private void load_directory_children_sync (File file, TreeIter? parent_iter = null, Cancellable? cancellable = null) throws Error {
-			
-			FileEnumerator enumerator = file.enumerate_children ("standard::*", FileQueryInfoFlags.NOFOLLOW_SYMLINKS, cancellable);
-			FileInfo info = null;
-
-			while (cancellable.is_cancelled () == false && ((info = enumerator.next_file (cancellable)) != null)) {
-
-				string icon_name = "gtk-file";
-
-				FileMonitor monitor = null;
-
-				TreeIter iter;
-				filetree.append  (out iter, parent_iter);
-				//filetree.insert  (out iter, parent_iter, -1);
-
-				if (info.get_file_type () == FileType.DIRECTORY) {
-					File subdir = file.resolve_relative_path (info.get_name ());
-					load_directory_children_sync (subdir, iter, cancellable);
-					icon_name = "gtk-directory";
-				}
-				else {
-					// For testing: Only watch .scss files not starting with an underscore;
-
-					var filename = info.get_name ();
-					if (Regex.match_simple ("^[^_\\.].*\\.scss$", filename)) {
-
-						File subfile = file.resolve_relative_path (info.get_name ());
-						
-						monitor = subfile.monitor (FileMonitorFlags.NONE, null);
-
-						stdout.printf("** Monitoring %s\n", filename);
-
-						monitor.changed.connect (on_file_changed);
-					}
-				}
-
-				var icon = new ThemedIcon (icon_name);
-				var file_type = info.get_file_type ();
-
-				filetree.set(iter, 0, file.get_path (), 1, info.get_name (), 2, monitor, 3, icon, 4, (int)file_type);
-			}
-		}
-
-		// FIXME: Use async! see if it is faster..
-
-		public void load_directory (string path) {
-
-			filetree.clear ();
-
-			try {
-				var dir = File.new_for_path(path);
-
-				load_directory_children_sync (dir, null, new Cancellable ());
-			}
-			catch (Error e) {
-				stderr.printf("Error: %s\n", e.message);
-			}
-		}
-
-		public void on_file_changed (File file, File? other_file, FileMonitorEvent event) {
-
-			if (event == FileMonitorEvent.CHANGES_DONE_HINT) {
-
-				stdout.printf ("Change detected to \"%s\" : %s\n", file.get_path(), event.to_string ());
-
-				compile_sass_file(file);
-			}
-		}
-
-		public bool compile_sass_file(File file) {
-
-			var ctx = new Sass.FileContext(file.get_path());
-			var opt = ctx.get_options();
-			opt.set_precision(1);
-			opt.set_output_style(Sass.OutputStyle.COMPRESSED);
-			opt.set_source_comments(false);
-			ctx.set_options(opt);
-
-			var compiler = new Sass.Compiler.from_file_context(ctx);
-			compiler.parse();
-			compiler.execute();
-
-			var output = ctx.get_output_string();
-
-			var error_status = ctx.get_error_status();
-
-			if (error_status == 0) {
-//				stdout.printf("%s\n", output);
-
-				try {
-					File outfile;
-					outfile = File.new_for_path("/var/www/html/wolfgang-braun/css/main.css");
-					var os = outfile.replace(null, false, FileCreateFlags.NONE);
-					var dos = new DataOutputStream(os);
-					dos.put_string(output);
-
-					this.websocket_server.send("refresh");
-				}
-				catch (Error e) {
-					stderr.printf("Failed to write output file\n");
-				}
-			}
-			else {
-				stderr.printf("Failed to parse file: %u: %s\n", error_status, ctx.get_error_message());
-				return false;
-			}
-
-			return true;
-		}
 	}
 }

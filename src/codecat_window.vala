@@ -56,8 +56,16 @@ namespace CodeCat {
 			Gtk.TreeIter iter;
 			app.projects.get_iter (out iter, tree_path);
 			app.projects.set (iter, 3, !toggle.active);
+			
+            Project prj;
+            app.projects.get(iter, 0, out prj);
+            if (toggle.active) {
+                prj.start();
+            }
+            else {
+                prj.stop();
+            }
 		}
-
 
 		public ApplicationWindow (CodeCat application) {
 			GLib.Object (application:application);
