@@ -138,6 +138,20 @@ namespace CodeCat {
 			stack.add_titled (swin, "devdocs", "DevDocs");
 			dd_view.open ("http://devdocs.io");
 
+
+			swin = new ScrolledWindow(null, null);
+
+		 	var logview = new TextView.with_buffer(this.app.log_buffer);
+		 	logview.editable = false;
+		 	logview.margin = 10;
+		 	logview.override_font(Pango.FontDescription.from_string("monospace"));
+		 	swin.add(logview);
+
+			swin.show_all();
+			stack.add_titled (swin, "log", "Log");
+
+			this.app.log("CodeCat has been launched");
+
 		}
 	}
 }

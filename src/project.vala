@@ -32,7 +32,7 @@ namespace CodeCat {
 		
 		private CodeCat app;
 		
-		private FileMonitor monitor;
+		private List<FileMonitor> monitors;
 
 		public bool running { get; set; default = false; }
 
@@ -58,15 +58,6 @@ namespace CodeCat {
 			
 			load_directory(path);
 
-			// Monitor the whole directory
-			try {
-				File dir = File.new_for_path(path);
-				monitor = dir.monitor_directory(FileMonitorFlags.NONE, null);
-				monitor.changed.connect(on_file_changed);
-			}
-			catch (Error e) {
-				warning ("Failed to setup file monitor");
-			}
 		}
 
 		public void stop () {
@@ -84,7 +75,7 @@ namespace CodeCat {
 
 		    while (cancellable.is_cancelled () == false && ((info = enumerator.next_file (cancellable)) != null)) {
 
-			    string icon_name = "gtk-file";
+			    // string icon_name = Gtk.Stock.FILE;
 
 			    TreeIter iter;
 			    this.app.filetree.append  (out iter, parent_iter);
@@ -93,13 +84,34 @@ namespace CodeCat {
 			    if (info.get_file_type () == FileType.DIRECTORY) {
 				    File subdir = file.resolve_relative_path (info.get_name ());
 				    load_directory_children_sync (subdir, iter, cancellable);
-				    icon_name = "gtk-directory";
+				    // icon_name = Gtk.Stock.DIRECTORY;
+			    }
+			    else {
+					// Monitor certain files (non partial SASS file for the moment...)
+					if (Regex.match_simple("^[^_\\.].*\\.scss$", info.get_name())) {
+						try {
+							var subfile = file.resolve_relative_path(info.get_name());
+							FileMonitor monitor = subfile.monitor_file(FileMonitorFlags.NONE, null);
+							debug ("Monitoring file: %s".printf(subfile.get_path()));
+
+							monitor.changed.connect(on_file_changed);
+							monitors.append(monitor);
+						}
+						catch (Error e) {
+							warning ("Failed to setup file monitor for " + file.get_path());
+						}
+					}
 			    }
 
-			    var icon = new ThemedIcon (icon_name);
-			    var file_type = info.get_file_type ();
+			    // var icon = new ThemedIcon(icon_name);
+			    var file_type = info.get_file_type();
 
-        		this.app.filetree.set(iter, 0, file.get_path (), 1, info.get_name (), 2, monitor, 3, icon, 4, (int)file_type);
+        		this.app.filetree.set(iter, 
+        			ProjectFileColumn.PATH, file.get_path(),
+        			ProjectFileColumn.NAME, info.get_name(),
+        			ProjectFileColumn.ICON, info.get_icon(),
+        			ProjectFileColumn.FILE_TYPE, (int)file_type
+        		);
     		}
     	}
 
@@ -122,10 +134,11 @@ namespace CodeCat {
 		public void on_file_changed (File file, File? other_file, FileMonitorEvent event) {
 
 		    var filename = file.get_basename();
+			debug ("File change detected: %s: %s ".printf(file.get_path(), event.to_string()));
 
 			if (event == FileMonitorEvent.CHANGES_DONE_HINT) {
 
-				stdout.printf ("Change detected to \"%s\" : %s\n", file.get_path(), event.to_string ());
+				// stdout.printf ("Change detected to \"%s\" : %s\n", file.get_path(), event.to_string ());
 
 			    if (Regex.match_simple ("^[^_\\.].*\\.scss$", filename)) {
 					compile_sass_file(file);
@@ -165,9 +178,12 @@ namespace CodeCat {
 				catch (Error e) {
 					stderr.printf("Failed to write output file\n");
 				}
+				this.app.log("Compiled successfully: %s\n".printf(file.get_path()));
 			}
 			else {
 				stderr.printf("Failed to parse file: %u: %s\n", error_status, ctx.get_error_message());
+				this.app.log("Failed to compile: %s\n".printf(file.get_path()));
+				this.app.log(ctx.get_error_message());
 				return false;
 			}
 

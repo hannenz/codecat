@@ -103,9 +103,11 @@
 																<property name="sort-column-id">1</property>
 																<child>
 																	<object class="GtkCellRendererPixbuf">
+																		<property name="icon-name">gtk-directroy</property>
 																	</object>
-																	<attributes>
-																		<attribute name="gicon">3</attribute>
+	 																<attributes>
+																		<!-- <attribute name="icon-name">2</attribute> -->
+																		<attribute name="gicon">2</attribute>
 																	</attributes>
 																</child>
 																<child>
@@ -145,12 +147,148 @@
 												<property name="transition-type">slide-left</property>
 												<child>
 													<object class="GtkScrolledWindow">
+
 														<property name="visible">True</property>
 														<property name="hscrollbar-policy">never</property>
 														<property name="vscrollbar-policy">automatic</property>
 														<property name="width-request">300</property>
+														<!-- <property name="margin">10</property> -->
+
 														<child>
-															<object class="GtkListBox">
+															<object class="GtkGrid">
+																<property name="visible">True</property>
+																<property name="row-homogeneous">False</property>
+																<property name="column-spacing">10</property>
+																<property name="row-spacing">10</property>
+																<child>
+																	<object class="GtkButton">
+																		<property name="visible">True</property>
+																		<property name="label">Close</property>
+																		<signal name="clicked" handler="on_inspector_close_button_clicked" />
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">0</property>
+																		<property name="width">2</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkImage" id="sidebar_primary_icon">
+																		<property name="visible">True</property>
+																		<property name="hexpand">True</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">1</property>
+																		<property name="width">2</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkLabel" id="sidebar_primary_label">
+																		<property name="visible">True</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">2</property>
+																		<property name="width">2</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkLabel">
+																		<property name="label">Auto compile</property>
+																		<property name="visible">True</property>
+																		<property name="hexpand">True</property>
+																		<property name="xalign">0</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">3</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkCheckButton">
+																		<property name="visible">True</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">1</property>
+																		<property name="top-attach">3</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkLabel">
+																		<property name="label">Source maps</property>
+																		<property name="visible">True</property>
+																		<property name="hexpand">True</property>
+																		<property name="xalign">0</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">4</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkCheckButton">
+																		<property name="visible">True</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">1</property>
+																		<property name="top-attach">4</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkLabel">
+																		<property name="label">Output path</property>
+																		<property name="visible">True</property>
+																		<property name="hexpand">True</property>
+																		<property name="xalign">0</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">5</property>
+																	</packing>
+																</child>
+																<child>
+																	<object class="GtkFileChooserButton">
+																		<property name="visible">True</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">1</property>
+																		<property name="top-attach">5</property>
+																	</packing>
+																</child>
+
+																<child>
+																	<object class="GtkLabel">
+																		<property name="label">Output style</property>
+																		<property name="visible">True</property>
+																		<property name="hexpand">True</property>
+																		<property name="xalign">0</property>
+																	</object>
+																	<packing>
+																		<property name="left-attach">0</property>
+																		<property name="top-attach">6</property>
+																	</packing>
+																</child>
+
+																<child>
+																	<object class="GtkComboBoxText">
+																		<property name="visible">True</property>
+																		<items>
+																			<item id="compressed">Compressed</item>
+																			<item id="compact">Compact</item>
+																			<item id="nested">Nested</item>
+																		</items>
+																	</object>
+																	<packing>
+																		<property name="left-attach">1</property>
+																		<property name="top-attach">6</property>
+																	</packing>
+																</child>
+															</object>
+
+
+
+<!-- 														<object class="GtkListBox">
 																<property name="visible">True</property>
 																<child>
 																	<object class="GtkButton">
@@ -180,15 +318,51 @@
 																<child>
 																	<object class="GtkListBoxRow">
 																		<property name="visible">True</property>
+
 																		<child>
-																			<object class="GtkLabel">
+																			<object class="GtkBox">
 																				<property name="visible">True</property>
-																				<property name="label">Watch</property>
+																				<property name="orientation">horizontal</property>
+																				<child>
+																					<object class="GtkLabel">
+																						<property name="visible">True</property>
+																						<property name="label">Auto compile</property>
+																					</object>
+																				</child>
+																				<child>
+																					<object class="GtkCheckButton">
+																						<property name="visible">True</property>
+																					</object>
+																				</child>
+																			</object>
+																		</child>
+																	</object>
+																</child>
+																<child>
+																	<object class="GtkListBoxRow">
+																		<property name="visible">True</property>
+
+																		<child>
+																			<object class="GtkBox">
+																				<property name="visible">True</property>
+																				<property name="orientation">horizontal</property>
+																				<child>
+																					<object class="GtkLabel">
+																						<property name="visible">True</property>
+																						<property name="label">Source Maps</property>
+																					</object>
+																				</child>
+																				<child>
+																					<object class="GtkCheckButton">
+																						<property name="visible">True</property>
+																					</object>
+																				</child>
 																			</object>
 																		</child>
 																	</object>
 																</child>
 															</object>
+ -->														
 														</child>
 													</object>
 												</child>
