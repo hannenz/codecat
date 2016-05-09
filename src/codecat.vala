@@ -84,26 +84,12 @@ namespace CodeCat {
 			TreeIter iter;
 			Project project;
 
-			// project = new Project (this, 8001);
-			// project.name = "Württembergische Landesbünne";
-			// project.path = "/var/www/html/wlb_static/";
-			// project.custom_web_server = "";
-			// project.start();
-			// projects.append(out iter);
-			// projects.set(iter,
-			// 	ProjectColumn.PROJECT, project,
-			// 	ProjectColumn.NAME, project.name,
-			// 	ProjectColumn.PATH, project.path,
-			// 	ProjectColumn.RUNNING,
-			// 	project.running
-			// );
-
-			project = new Project (this, 8002);
-			project.name = "Wolfgang Braun";
-			project.path = "/var/www/html/wolfgang-braun";
-			project.custom_web_server = "http://wolfgang-braun.localhost/";
+			project = new Project (this, 8001);
+			project.name = "Württembergische Landesbünne";
+			project.path = "/var/www/html/wlb_static/";
+			project.custom_web_server = "http://wlb.localhost/";
 			project.start();
-			projects.append (out iter);
+			projects.append(out iter);
 			projects.set(iter,
 				ProjectColumn.PROJECT, project,
 				ProjectColumn.NAME, project.name,
@@ -111,6 +97,20 @@ namespace CodeCat {
 				ProjectColumn.RUNNING,
 				project.running
 			);
+
+			//project = new Project (this, 8002);
+			//project.name = "Wolfgang Braun";
+			//project.path = "/var/www/html/wolfgang-braun";
+			//project.custom_web_server = "http://wolfgang-braun.localhost/";
+			//project.start();
+			//projects.append (out iter);
+			//projects.set(iter,
+		//		ProjectColumn.PROJECT, project,
+	//			ProjectColumn.NAME, project.name,
+	//			ProjectColumn.PATH, project.path,
+	//			ProjectColumn.RUNNING,
+	//			project.running
+	//		);
 
 			// project = new Project (this, 8003);
 			// project.name = "Versichern Online";
