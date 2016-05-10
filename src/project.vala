@@ -1,8 +1,9 @@
 using Gtk;
+using Json;
 
 namespace CodeCat {
 
-	public class Project : Object {
+	public class Project : GLib.Object {
 
 		public enum State {
 			WATCHING,
@@ -58,6 +59,11 @@ namespace CodeCat {
 			
 			load_directory(path);
 
+			Json.Node root = Json.gobject_serialize(this.app.filetree);
+			Json.Generator generator = new Json.Generator();
+			generator.set_root(root);
+			string json = generator.to_data(null);
+			debug (json);
 		}
 
 		public void stop () {
@@ -159,16 +165,14 @@ namespace CodeCat {
 			compiler.parse();
 			compiler.execute();
 
-			var output = ctx.get_output_string();
-
 			var error_status = ctx.get_error_status();
-
 			if (error_status == 0) {
-//				stdout.printf("%s\n", output);
+
+				var output = ctx.get_output_string();
 
 				try {
 					File outfile;
-					outfile = File.new_for_path("/var/www/html/wolfgang-braun/css/main.css");
+					outfile = File.new_for_path(path + "/css/main.css");
 					var os = outfile.replace(null, false, FileCreateFlags.NONE);
 					var dos = new DataOutputStream(os);
 					dos.put_string(output);
@@ -178,12 +182,30 @@ namespace CodeCat {
 				catch (Error e) {
 					stderr.printf("Failed to write output file\n");
 				}
-				this.app.log("Compiled successfully: %s\n".printf(file.get_path()));
+
+				var mssg = "Compiled successfully: %s".printf(file.get_path());
+
+				this.app.log(mssg);
+
+				uint ctx_id = this.app.window.statusbar.get_context_id("log");
+				this.app.window.statusbar.push(ctx_id, mssg);
+
+				this.app.window.infobar.get_content_area().add(new Gtk.Label (mssg));
+				this.app.window.infobar.set_message_type(Gtk.MessageType.INFO);
+				this.app.window.infobar.show();
 			}
 			else {
-				stderr.printf("Failed to parse file: %u: %s\n", error_status, ctx.get_error_message());
-				this.app.log("Failed to compile: %s\n".printf(file.get_path()));
-				this.app.log(ctx.get_error_message());
+				var mssg = "Failed to compile: %s".printf(file.get_path());
+
+				this.app.log("%s:\n[error_status: %u]:%s".printf(mssg, error_status, ctx.get_error_message()));
+
+				uint ctx_id = this.app.window.statusbar.get_context_id("log");
+				this.app.window.statusbar.push(ctx_id, mssg);
+
+				this.app.window.infobar.get_content_area().add(new Gtk.Label (mssg));
+				this.app.window.infobar.set_message_type(Gtk.MessageType.ERROR);
+				this.app.window.infobar.show();
+
 				return false;
 			}
 

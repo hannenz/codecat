@@ -32,6 +32,12 @@ namespace CodeCat {
 
 		[GtkChild]
 		public Gtk.Button refresh_browser_button;
+
+		[GtkChild]
+		public Gtk.InfoBar infobar;
+
+		[GtkChild]
+		public Gtk.Statusbar statusbar;
 		
 		public WebView view;
 
@@ -150,7 +156,24 @@ namespace CodeCat {
 			swin.show_all();
 			stack.add_titled (swin, "log", "Log");
 
+			this.infobar.add_button("See Log", 1);
+			this.infobar.response.connect( (response) => {
+					switch (response) {
+						case 1:
+							this.stack.set_visible_child_name("log");
+							this.infobar.hide();
+							break;
+							
+						default:
+							this.infobar.hide();
+							break;
+					}
+				});
+
+
 			this.app.log("CodeCat has been launched");
+
+
 
 		}
 	}

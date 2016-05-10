@@ -86,7 +86,7 @@ namespace CodeCat {
 
 			project = new Project (this, 8001);
 			project.name = "Württembergische Landesbünne";
-			project.path = "/var/www/html/wlb_static/";
+			project.path = "/var/www/html/wlb/";
 			project.custom_web_server = "http://wlb.localhost/";
 			project.start();
 			projects.append(out iter);
@@ -179,7 +179,6 @@ namespace CodeCat {
 
 			window.view.open("http://localhost:%u".printf( project.http_port));
 		}
-
 
 		/**
 		 * Log a messgae to the GUI log
