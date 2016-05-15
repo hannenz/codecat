@@ -2,6 +2,13 @@ using Gtk;
 
 namespace CodeCat {
 
+	public enum MessageType {
+		INFO,
+		SUCCESS,
+		WARNING,
+		ERROR
+	}
+
 	/* Columns for project list store */
 	public enum ProjectColumn {
 		PROJECT,
@@ -84,12 +91,26 @@ namespace CodeCat {
 			TreeIter iter;
 			Project project;
 
-			project = new Project (this, 8001);
-			project.name = "Württembergische Landesbünne";
-			project.path = "/var/www/html/wlb/";
-			project.custom_web_server = "http://wlb.localhost/";
+			// project = new Project (this, 8001);
+			// project.name = "Württembergische Landesbünne";
+			// project.path = "/var/www/html/wlb/";
+			// project.custom_web_server = "http://wlb.localhost/";
+			// project.start();
+			// projects.append(out iter);
+			// projects.set(iter,
+			// 	ProjectColumn.PROJECT, project,
+			// 	ProjectColumn.NAME, project.name,
+			// 	ProjectColumn.PATH, project.path,
+			// 	ProjectColumn.RUNNING,
+			// 	project.running
+			// );
+
+			project = new Project (this, 8002);
+			project.name = "Wolfgang Braun";
+			project.path = "/var/www/html/wolfgang-braun";
+			project.custom_web_server = "http://wolfgang-braun.localhost/";
 			project.start();
-			projects.append(out iter);
+			projects.append (out iter);
 			projects.set(iter,
 				ProjectColumn.PROJECT, project,
 				ProjectColumn.NAME, project.name,
@@ -97,20 +118,6 @@ namespace CodeCat {
 				ProjectColumn.RUNNING,
 				project.running
 			);
-
-			//project = new Project (this, 8002);
-			//project.name = "Wolfgang Braun";
-			//project.path = "/var/www/html/wolfgang-braun";
-			//project.custom_web_server = "http://wolfgang-braun.localhost/";
-			//project.start();
-			//projects.append (out iter);
-			//projects.set(iter,
-		//		ProjectColumn.PROJECT, project,
-	//			ProjectColumn.NAME, project.name,
-	//			ProjectColumn.PATH, project.path,
-	//			ProjectColumn.RUNNING,
-	//			project.running
-	//		);
 
 			// project = new Project (this, 8003);
 			// project.name = "Versichern Online";
@@ -183,16 +190,38 @@ namespace CodeCat {
 		/**
 		 * Log a messgae to the GUI log
 		 * 
-		 * @param string  		The message
+		 * @param string  				The message
+		 * @param CodeCat.MessageType 	The message's type
+		 *
 		 * @return void
 		 */
-		public void log(string mssg) {
+		public void log(string mssg, MessageType type = 0) {
 
 			TextIter iter;
 			var date = new DateTime.now(new TimeZone.local());
-			var text = "%s: %s\n\n".printf(date.to_string(), mssg);
+			var dateText = date.to_string();
+
+//			var text = "<b>%s:</b> %s\n\n".printf(date.to_string(), mssg);
+
 			this.log_buffer.get_start_iter(out iter);
-			this.log_buffer.insert(ref iter, text, -1);
+			string fg_color;
+
+			switch (type) {
+				case MessageType.SUCCESS:
+					fg_color = "green";
+					break;
+				case MessageType.ERROR:
+					fg_color = "red";
+					break;
+				default:
+					fg_color = "black";
+					break;
+			}
+
+			var tag = log_buffer.create_tag(null, "weight", "bold", "foreground", fg_color, null);
+			this.log_buffer.insert_with_tags(ref iter, dateText, -1, tag, null);
+
+			this.log_buffer.insert(ref iter, " " + mssg + "\n\n", -1);
 		}
 
 	}

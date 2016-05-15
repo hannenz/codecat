@@ -172,9 +172,6 @@ namespace CodeCat {
 
 
 			this.app.log("CodeCat has been launched");
-
-
-
 		}
 	}
 }

@@ -185,7 +185,7 @@ namespace CodeCat {
 
 				var mssg = "Compiled successfully: %s".printf(file.get_path());
 
-				this.app.log(mssg);
+				this.app.log(mssg, MessageType.SUCCESS);
 
 				uint ctx_id = this.app.window.statusbar.get_context_id("log");
 				this.app.window.statusbar.push(ctx_id, mssg);
@@ -197,7 +197,7 @@ namespace CodeCat {
 			else {
 				var mssg = "Failed to compile: %s".printf(file.get_path());
 
-				this.app.log("%s:\n[error_status: %u]:%s".printf(mssg, error_status, ctx.get_error_message()));
+				this.app.log("%s:\n[error_status: %u]:%s".printf(mssg, error_status, ctx.get_error_message()), MessageType.ERROR);
 
 				uint ctx_id = this.app.window.statusbar.get_context_id("log");
 				this.app.window.statusbar.push(ctx_id, mssg);
