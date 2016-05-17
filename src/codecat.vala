@@ -172,9 +172,28 @@ namespace CodeCat {
 			window.present ();
 		}
 
+		public void preferences_activated() {
+			debug ("Preferences activated");
+		}
+
+		public void quit_activated () {
+			debug ("Quit activated");
+		}
+
+
+
 		/* Guaranteed to be called once for each primary application instance: */
 		public override void startup () {
 			base.startup ();
+
+			GLib.ActionEntry[] entries = {
+				{ "preferences", preferences_activated, null, null, null},
+				{ "quit", quit_activated, null, null, null}
+			};
+
+			var builder = new Gtk.Builder.from_resource("/de/hannenz/codecat/app_menu.ui");
+			GLib.MenuModel app_menu = builder.get_object("appmenu") as GLib.MenuModel;
+			this.set_app_menu(app_menu);
 		}
 
 		public void switch_to_project (Project project) {

@@ -27,6 +27,7 @@ SOURCES =	src/main.vala\
 			src/websocket.vala
 
 UIFILES = 	data/codecat.ui\
+			data/app_menu.ui\
 			data/codecat.gresource.xml
 
 #Disable implicit rules by empty target .SUFFIXES
