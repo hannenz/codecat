@@ -13,7 +13,7 @@ CC = gcc
 VALAC = valac
 PKGCONFIG = $(shell which pkg-config)
 # PACKAGES = gtk+-3.0 libsoup-2.4 webkitgtk-3.0 sqlite3 gee-0.8 linux libsass json-glib-1.0
-PACKAGES = gtk+-3.0 libsoup-2.4 webkitgtk-3.0  gee-0.8 linux libsass json-glib-1.0
+PACKAGES = gtk+-3.0 libsoup-2.4 webkitgtk-3.0  gee-0.8 linux libsass json-glib-1.0 libnotify
 CFLAGS = `$(PKGCONFIG) --cflags $(PACKAGES)`
 LIBS = `$(PKGCONFIG) --libs $(PACKAGES)`
 VALAFLAGS = --vapidir=src/vapi $(patsubst %, --pkg %, $(PACKAGES)) --target-glib=2.38 --gresources data/codecat.gresource.xml 
@@ -24,10 +24,12 @@ SOURCES =	src/main.vala\
 			src/webserver.vala\
 			src/webbrowser.vala\
 			src/project.vala\
-			src/websocket.vala
+			src/websocket.vala\
+			src/preferences.vala
 
 UIFILES = 	data/codecat.ui\
 			data/app_menu.ui\
+			data/preferences.ui\
 			data/codecat.gresource.xml
 
 #Disable implicit rules by empty target .SUFFIXES
@@ -43,6 +45,11 @@ $(PRG): $(SOURCES) $(UIFILES)
 clean:
 	rm -f $(OBJS)
 	rm -f $(PRG)
+
+schema: data/de.hannenz.codecat.gschema.xml
+	cp data/de.hannenz.codecat.gschema.xml /usr/share/glib-2.0/schemas/ && glib-compile-schemas /usr/share/glib-2.0/schemas/
+
+
 
 distclean: clean
 	rm -f src/*.vala.c

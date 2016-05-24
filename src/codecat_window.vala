@@ -45,6 +45,8 @@ namespace CodeCat {
 
 		private Window inspector_window;
 
+		private GLib.Settings settings;
+
 		[GtkCallback]
 		public void on_test_button_clicked (Button button) {
 			app.websocket_server.send("reload");
@@ -75,8 +77,13 @@ namespace CodeCat {
 
 		public ApplicationWindow (CodeCat application) {
 			GLib.Object (application:application);
+
 			this.app = application;
 
+			settings = new GLib.Settings ("de.hannenz.codecat");
+			settings.bind ("transition", stack, "transition-type", GLib.SettingsBindFlags.DEFAULT);
+
+			
 			var grey = Gdk.RGBA ();
 			grey.parse("#cccccc");
 

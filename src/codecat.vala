@@ -1,4 +1,5 @@
 using Gtk;
+using Notify;
 
 namespace CodeCat {
 
@@ -45,6 +46,8 @@ namespace CodeCat {
 		public CodeCat () {
 			application_id = "de.hannenz.codecat";
 			log_buffer = new Gtk.TextBuffer(null);
+
+			Notify.init("CodeCat");
 		}
 
 		/* Activate is called when the application is launched without command line parameters */
@@ -173,11 +176,13 @@ namespace CodeCat {
 		}
 
 		public void preferences_activated() {
-			debug ("Preferences activated");
+			var prefs = new Preferences(window);
+			prefs.present();
 		}
 
 		public void quit_activated () {
 			debug ("Quit activated");
+			quit();
 		}
 
 
@@ -186,14 +191,23 @@ namespace CodeCat {
 		public override void startup () {
 			base.startup ();
 
-			GLib.ActionEntry[] entries = {
-				{ "preferences", preferences_activated, null, null, null},
-				{ "quit", quit_activated, null, null, null}
-			};
+			var action = new GLib.SimpleAction("preferences", null);
+			action.activate.connect (preferences_activated);
+			add_action (action);
+
+			action = new GLib.SimpleAction("quit", null);
+			action.activate.connect (quit_activated);
+			add_action (action);
+			add_accelerator ("<Ctrl>Q", "app.quit", null);
+
+			// GLib.ActionEntry[] entries = {
+			// 	{ "preferences", preferences_activated, null, null, null},
+			// 	{ "quit", quit_activated, null, null, null}
+			// };
 
 			var builder = new Gtk.Builder.from_resource("/de/hannenz/codecat/app_menu.ui");
 			GLib.MenuModel app_menu = builder.get_object("appmenu") as GLib.MenuModel;
-			this.set_app_menu(app_menu);
+			set_app_menu(app_menu);
 		}
 
 		public void switch_to_project (Project project) {
@@ -223,17 +237,21 @@ namespace CodeCat {
 //			var text = "<b>%s:</b> %s\n\n".printf(date.to_string(), mssg);
 
 			this.log_buffer.get_start_iter(out iter);
-			string fg_color;
+			string fg_color;	// FG color for log
+			string icon;  		// Icon For notification
 
 			switch (type) {
 				case MessageType.SUCCESS:
 					fg_color = "green";
+					icon = "dialog-ok";
 					break;
 				case MessageType.ERROR:
 					fg_color = "red";
+					icon = "dialog-error";
 					break;
 				default:
 					fg_color = "black";
+					icon = "dialog-information";
 					break;
 			}
 
@@ -241,7 +259,16 @@ namespace CodeCat {
 			this.log_buffer.insert_with_tags(ref iter, dateText, -1, tag, null);
 
 			this.log_buffer.insert(ref iter, " " + mssg + "\n\n", -1);
-		}
 
+			var summary = "CodeCat";
+
+			try {
+				var notification = new Notify.Notification(summary, mssg, icon);
+				notification.show();
+			}
+			catch (Error e) {
+				error("Error: %s", e.message);
+			}
+		}
 	}
 }

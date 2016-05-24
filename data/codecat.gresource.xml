@@ -3,5 +3,6 @@
   <gresource prefix="/de/hannenz/codecat">
     <file>codecat.ui</file>
     <file>app_menu.ui</file>
+    <file>preferences.ui</file>
   </gresource>
 </gresources>
