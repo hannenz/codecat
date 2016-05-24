@@ -2,3 +2,4 @@
 *.vala.c
 codecat
 *.swp
+src/resources.c
