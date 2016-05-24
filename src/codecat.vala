@@ -202,6 +202,7 @@ namespace CodeCat {
 			add_action (action);
 			add_accelerator ("<Ctrl>Q", "app.quit", null);
 
+
 			var builder = new Gtk.Builder.from_resource("/de/hannenz/codecat/app_menu.ui");
 			GLib.MenuModel app_menu = builder.get_object("appmenu") as GLib.MenuModel;
 			set_app_menu(app_menu);
@@ -257,16 +258,20 @@ namespace CodeCat {
 
 			this.log_buffer.get_start_iter(out iter);
 			string fg_color;	// FG color for log
+			string icon;  		// Icon For notification
 
 			switch (type) {
 				case MessageType.SUCCESS:
 					fg_color = "green";
+					icon = "dialog-ok";
 					break;
 				case MessageType.ERROR:
 					fg_color = "red";
+					icon = "dialog-error";
 					break;
 				default:
 					fg_color = "black";
+					icon = "dialog-information";
 					break;
 			}
 
