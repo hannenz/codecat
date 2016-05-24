@@ -1,4 +1,5 @@
 using Gtk;
+using Notify;
 
 namespace CodeCat {
 
@@ -45,6 +46,8 @@ namespace CodeCat {
 		public CodeCat () {
 			application_id = "de.hannenz.codecat";
 			log_buffer = new Gtk.TextBuffer(null);
+
+			Notify.init("CodeCat");
 		}
 
 		/* Activate is called when the application is launched without command line parameters */
@@ -173,11 +176,13 @@ namespace CodeCat {
 		}
 
 		public void preferences_activated() {
-			debug ("Preferences activated");
+			var prefs = new Preferences(window);
+			prefs.present();
 		}
 
 		public void quit_activated () {
 			debug ("Quit activated");
+			quit();
 		}
 
 
@@ -186,14 +191,20 @@ namespace CodeCat {
 		public override void startup () {
 			base.startup ();
 
-			GLib.ActionEntry[] entries = {
-				{ "preferences", preferences_activated, null, null, null},
-				{ "quit", quit_activated, null, null, null}
-			};
+			// App Menu
+
+			var action = new GLib.SimpleAction("preferences", null);
+			action.activate.connect (preferences_activated);
+			add_action (action);
+
+			action = new GLib.SimpleAction("quit", null);
+			action.activate.connect (quit_activated);
+			add_action (action);
+			add_accelerator ("<Ctrl>Q", "app.quit", null);
 
 			var builder = new Gtk.Builder.from_resource("/de/hannenz/codecat/app_menu.ui");
 			GLib.MenuModel app_menu = builder.get_object("appmenu") as GLib.MenuModel;
-			this.set_app_menu(app_menu);
+			set_app_menu(app_menu);
 		}
 
 		public void switch_to_project (Project project) {
@@ -207,7 +218,7 @@ namespace CodeCat {
 		}
 
 		/**
-		 * Log a messgae to the GUI log
+		 * Log a message to the GUI log, show notification
 		 * 
 		 * @param string  				The message
 		 * @param CodeCat.MessageType 	The message's type
@@ -222,8 +233,30 @@ namespace CodeCat {
 
 //			var text = "<b>%s:</b> %s\n\n".printf(date.to_string(), mssg);
 
+
+			// Try to extract line nr. and file from (error) message
+			string error_line;
+			string error_filename;
+			string error_mssg = "";
+			MatchInfo match_info;
+
+			try {
+				var regex = new Regex("on line (\\d+) of .*\\/(.*)$", RegexCompileFlags.MULTILINE);
+				if (regex.match(mssg, 0, out match_info)) {
+					error_line = match_info.fetch(1);
+					error_filename = match_info.fetch(2);
+					error_mssg = "%s: %s".printf(error_line, error_filename);
+				}
+				else {
+					debug ("No match in " + mssg);
+				}
+			}
+			catch (Error e) {
+				error("Error: " + e.message);
+			}
+
 			this.log_buffer.get_start_iter(out iter);
-			string fg_color;
+			string fg_color;	// FG color for log
 
 			switch (type) {
 				case MessageType.SUCCESS:
@@ -237,11 +270,38 @@ namespace CodeCat {
 					break;
 			}
 
+			// Log to log
 			var tag = log_buffer.create_tag(null, "weight", "bold", "foreground", fg_color, null);
 			this.log_buffer.insert_with_tags(ref iter, dateText, -1, tag, null);
 
 			this.log_buffer.insert(ref iter, " " + mssg + "\n\n", -1);
-		}
 
+			// Show notification
+			try {
+
+				GLib.Settings settings = new GLib.Settings("de.hannenz.codecat");
+
+				switch (type) {
+					case MessageType.SUCCESS:
+						if (settings.get_boolean("show-success-notifications")) {
+							var notification = new Notify.Notification("CodeCat", mssg, "dialog-ok");
+							notification.show();
+						}
+						break;
+					case MessageType.ERROR:
+						if (settings.get_boolean("show-error-notifications")) {
+							var notification = new Notify.Notification("CodeCat", error_mssg, "dialog-error");
+							notification.show();
+						}
+						break;
+					default:
+						break;
+				}
+
+			}
+			catch (Error e) {
+				error("Error: %s", e.message);
+			}
+		}
 	}
 }

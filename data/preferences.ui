@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+	<requires lib="gtk+" version="3.12" />
+	<template class="CodeCatPreferences" parent="GtkDialog">
+		<property name="title" translatable="yes">Preferenes</property>
+		<property name="resizable">False</property>
+		<property name="modal">True</property>
+		<child internal-child="vbox">
+			<object class="GtkBox" id="vbox">
+				<child>
+					<object class="GtkGrid" id="grid">
+						<property name="visible">True</property>
+						<property name="margin">6</property>
+						<property name="row-spacing">12</property>
+						<property name="column-spacing">6</property>
+						<child>
+							<object class="GtkLabel" id="transition-label">
+								<property name="visible">True</property>
+								<property name="label">_Tranition</property>
+								<property name="use-underline">True</property>
+								<property name="mnemonic-widget">transition</property>
+								<property name="xalign">1</property>
+							</object>
+							<packing>
+								<property name="left-attach">0</property>
+								<property name="top-attach">0</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkComboBoxText" id="transition">
+								<property name="visible">True</property>
+								<items>
+									<item translatable="yes" id="none">None</item>
+									<item translatable="yes" id="crossfade">Fade</item>
+									<item translatable="yes" id="slide-left-right">Slide</item>
+								</items>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">0</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkLabel" id="show-error-notifications-label">
+								<property name="visible">True</property>
+								<property name="label">_Show notifications on error</property>
+								<property name="use-underline">True</property>
+								<property name="mnemonic-widget">show-error-notifications</property>
+								<property name="xalign">1</property>
+							</object>
+							<packing>
+								<property name="left-attach">0</property>
+								<property name="top-attach">1</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkCheckButton" id="show_error_notifications">
+								<property name="visible">True</property>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">1</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkLabel" id="show-success-notifications-label">
+								<property name="visible">True</property>
+								<property name="label">_Show notifications on success</property>
+								<property name="use-underline">True</property>
+								<property name="mnemonic-widget">show-success-notifications</property>
+								<property name="xalign">1</property>
+							</object>
+							<packing>
+								<property name="left-attach">0</property>
+								<property name="top-attach">2</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkCheckButton" id="show_success_notifications">
+								<property name="visible">True</property>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">2</property>
+							</packing>
+						</child>
+					</object>
+				</child>
+			</object>
+		</child>
+	</template>
+</interface>
+
+
+
+
+		
